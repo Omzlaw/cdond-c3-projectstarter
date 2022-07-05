@@ -4,7 +4,7 @@ commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
-      # Add parameter here   
+      # Add parameter here
     steps:
       - run:
           name: Destroy environments
@@ -13,8 +13,26 @@ commands:
             aws cloudformation delete-stack --stack-name udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}
             aws cloudformation delete-stack --stack-name udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
 
-jobs: 
+  revert-migrations:
+    description: Revert the last migration if successfully run in the current workflow.
+    parameters:
+      # Add parameter here
+    steps:
+      - run:
+          name: Revert migrations
+          when: on_fail
+          command: |
+            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
+            SUCCESS = $(curl https://kvdb.io/RqYPxs7iXayjU4HQuyp6D3/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            if(( $SUCCESS==1 )); 
+            then
+            #  cd ~/project/backend
+            #  npm install
+            #  Add revert code here. You can find this in the Getting Started section.
+              exit 1
+            fi
 
+jobs:
   build-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -35,7 +53,7 @@ jobs:
   build-backend:
     docker:
       - image: circleci/node:13.8.0
-    steps: 
+    steps:
       - checkout
       - restore_cache:
           keys: [backend-build]
@@ -50,10 +68,10 @@ jobs:
           key: backend-build
 
   test-frontend:
-    docker: 
+    docker:
       - image: circleci/node:13.8.0
     steps:
-      - checkout 
+      - checkout
       - run:
           name: Frontend unit test
           command: |
@@ -62,7 +80,7 @@ jobs:
             npm run test
 
   test-backend:
-    docker: 
+    docker:
       - image: circleci/node:13.8.0
     steps:
       - checkout
@@ -77,28 +95,28 @@ jobs:
     docker:
       - image: circleci/node:13.8.0
     steps:
-    - checkout
-    - run:
-        name: Audit frontend
-        command: |
-          cd frontend
-          npm install
-          npm audit fix --audit-level=critical --force
-          npm audit --audit-level=critical
+      - checkout
+      - run:
+          name: Audit frontend
+          command: |
+            cd frontend
+            npm install
+            npm audit fix --audit-level=critical --force
+            npm audit --audit-level=critical
 
   scan-backend:
     docker:
       - image: circleci/node:13.8.0
     steps:
-    - checkout
-    - run:
-        name: Audit backend
-        command: |
-          cd backend
-          npm install
-          npm audit fix --audit-level=critical --force
-          npm audit fix --force
-          npm audit --audit-level=critical
+      - checkout
+      - run:
+          name: Audit backend
+          command: |
+            cd backend
+            npm install
+            npm audit fix --audit-level=critical --force
+            npm audit fix --force
+            npm audit --audit-level=critical
 
   deploy-infrastructure:
     docker:
@@ -136,7 +154,7 @@ jobs:
       - destroy-environment
 
   configure-infrastructure:
-    docker: 
+    docker:
       - image: python:3.7-alpine3.11
     steps:
       - checkout
@@ -153,6 +171,86 @@ jobs:
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
+
+  run-migrations:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [backend-build]
+      - run:
+          name: Run migrations
+          command: |
+            cd backend
+            npm install
+            npm run migrations > migrations_dump.txt
+      - run:
+          name: Send migration status to kvdb.io
+          command: |
+            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            then
+                curl https://kvdb.io/RqYPxs7iXayjU4HQuyp6D3/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+            fi
+
+  deploy-frontend:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            yum install -y python3
+            yum install -y ansible
+            yum install -y nodejs
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances --query 'Reservations[*].Instances[*].PublicIpAddress' --filters "Name=tag:project,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}")
+            export API_URL="https://${BACKEND_IP}:3030"
+            echo "API_URL = ${API_URL}"
+            echo API_URL="https://${BACKEND_IP}:3030" >> frontend/.env
+            cat frontend/.env
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm install
+            npm run build
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      - destroy-environment
+      - revert-migrations
+
+  deploy-backend:
+    docker: 
+      - image: python:3.7-alpine3.11
+    steps: 
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["04:02:55:93:d4:6f:d5:f2:b2:2a:1a:e4:8e:e7:98:ee"]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible tar gzip npm nodejs
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd backend
+            npm i
+            npm run build
+            cd ..
+            tar -C backend -czvf artifact.tar.gz .
+            cd .circleci/ansible
+            echo "Contents of the inventory.txt file is -------"
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
+      - destroy-environment
+      - revert-migrations
 
 
 
@@ -173,3 +271,9 @@ workflows:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
+      - deploy-frontend:
+          requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
