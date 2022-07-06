@@ -4,10 +4,20 @@
     state: directory
 
 
-- name: Extract project files
-  unarchive:
-    src: "artifact.tar.gz"
+# - name: Extract project files
+#   unarchive:
+#     src: "artifact.tar.gz"
+#     dest: "~/web/udapeople-backend"
+
+- name: Copying required files
+  template:
+    src: "files/artifact.tar.gz"
     dest: "~/web/udapeople-backend"
+
+- name: Extract files
+  shell: |
+    cd ~/web/udapeople-backend
+    tar -xzvf artifact.tar.gz 
 
 - name: Start app
   shell: |
