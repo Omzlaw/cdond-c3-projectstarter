@@ -22,14 +22,12 @@ commands:
           name: Revert migrations
           when: on_fail
           command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
             SUCCESS = $(curl https://kvdb.io/RqYPxs7iXayjU4HQuyp6D3/migration_${CIRCLE_WORKFLOW_ID:0:7} -k)
             if(( $SUCCESS==1 )); 
             then
-            #  cd ~/project/backend
-            #  npm install
-            #  Add revert code here. You can find this in the Getting Started section.
-              exit 1
+            cd ~/project/backend
+            npm install
+            npm run migrations:revert
             fi
 
 jobs:
@@ -197,6 +195,7 @@ jobs:
     docker:
       - image: amazon/aws-cli
     steps:
+      - run: yum install -y tar gzip
       - attach_workspace:
           at: ~/
       - run:
@@ -237,8 +236,9 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update ansible tar gzip npm nodejs
+            apk add --no-cache aws-cli
       - run:
-          name: Deploy frontend objects
+          name: Deploy backend objects
           command: |
             cd backend
             npm i
