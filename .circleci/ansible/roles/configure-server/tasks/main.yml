@@ -24,7 +24,7 @@
   become: true
   apt:
     name: ["nodejs", "npm"]
-    state: 13.8
+    state: latest
     update_cache: yes
 
 - name: "install pm2"
