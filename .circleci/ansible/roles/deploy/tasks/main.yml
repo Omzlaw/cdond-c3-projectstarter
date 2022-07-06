@@ -6,7 +6,7 @@
 
 - name: Extract project files
   unarchive:
-    src: "/artifact.tar.gz"
+    src: "artifact.tar.gz"
     dest: "~/web/udapeople-backend"
 
 - name: Start app
