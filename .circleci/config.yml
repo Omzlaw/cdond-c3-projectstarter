@@ -259,7 +259,6 @@ jobs:
             echo TYPEORM_USERNAME=$TYPEORM_USERNAME > ".env"
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD > ".env"
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE > ".env"
-            cat .env
             npm i
             npm run build
             cd ..
@@ -318,6 +317,24 @@ jobs:
       - destroy-environment
       - revert-migrations
 
+  cloudfront-update:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            echo "Nothing to see here"
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            aws cloudformation deploy \
+            --template-file .circleci/files/cloudfront.yml \
+            --stack-name InitialStack \
+            --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --tags project=udapeople
+
 workflows:
   default:
     jobs:
@@ -346,3 +363,5 @@ workflows:
           requires: [run-migrations]
       - smoke-test:
           requires: [deploy-frontend, deploy-backend]
+      - cloudfront-update:
+          requires: [smoke-test]
