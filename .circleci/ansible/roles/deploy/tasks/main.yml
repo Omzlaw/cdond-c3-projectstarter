@@ -12,12 +12,12 @@
 - name: Copying required file archive
     shell: |
       cd ~/web/udapeople-backend
-      aws s3 cp s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}/artifact.tar.gz .
+      aws s3 cp s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}/backend.tar.gz .
 
 - name: Extract files and start app
   shell: |
     cd ~/web/udapeople-backend
-    tar -xzvf artifact.tar.gz 
+    tar -xzvf backend.tar.gz 
     npm install
     pm2 stop default
     pm2 start npm -- start
