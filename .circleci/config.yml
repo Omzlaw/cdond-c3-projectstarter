@@ -252,11 +252,18 @@ jobs:
             npm i
             npm run build
             cd ..
+            echo "Zipping files -------"
             tar -C backend -czvf backend.tar.gz .
             echo "Zipped files -------"
-            aws s3 cp backend.tar.gz s3://udapeople-11640059212
-            echo "Moved tar file -------"
-            cd .circleci/ansible
+            echo "Moving archive -------"
+            mv artifact.tar.gz .circleci/ansible/roles/deploy/files
+            echo "Moved archive -------"
+            echo "Confirming move-------"
+            cd .circleci/ansible/roles/deploy/files
+            ls -a
+            cd ..
+            cd ..
+            cd ..
             echo "Contents of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
