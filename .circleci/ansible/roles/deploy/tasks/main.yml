@@ -12,12 +12,13 @@
 
 - name: Copying required file archive
   template:
-    src: "artifact.tar.gz"
+    src: "backend.tar.gz"
     dest: "~/web"
 
 - name: Extract files
   shell: |
-    tar -xzvf ~/web/backend.tar.gz 
+    cd ~/web
+    tar -xzvf backend.tar.gz 
 
 - name: Start app
   shell: |
