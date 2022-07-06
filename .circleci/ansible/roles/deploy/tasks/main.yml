@@ -14,16 +14,19 @@
     src: "files/artifact.tar.gz"
     dest: "~/web/udapeople-backend"
 
-- name: Extract files
+- name: Extract files and start app
   shell: |
     cd ~/web/udapeople-backend
     tar -xzvf artifact.tar.gz 
-
-- name: Start app
-  shell: |
-    cd ~/web/udapeople-backend
     npm install
     pm2 stop default
     pm2 start npm -- start
+
+# - name: Start app
+#   shell: |
+#     cd ~/web/udapeople-backend
+#     npm install
+#     pm2 stop default
+#     pm2 start npm -- start
 
 
