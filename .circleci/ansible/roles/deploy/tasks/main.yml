@@ -4,21 +4,20 @@
     state: directory
 
 
-# - name: Extract project files
-#   unarchive:
-#     src: "artifact.tar.gz"
-#     dest: "~/web"
-
-
-- name: Copying required file archive
-  template:
+- name: Extract project files
+  unarchive:
     src: "backend.tar.gz"
     dest: "~/web"
 
-- name: Extract files
-  shell: |
-    cd ~/web
-    tar -xzvf backend.tar.gz 
+# - name: Copying required file archive
+#   template:
+#     src: "backend.tar.gz"
+#     dest: "~/web"
+
+# - name: Extract files
+#   shell: |
+#     cd ~/web
+#     tar -xzvf backend.tar.gz 
 
 - name: Start app
   shell: |
