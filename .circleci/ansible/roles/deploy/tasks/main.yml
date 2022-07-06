@@ -9,10 +9,10 @@
 #     src: "artifact.tar.gz"
 #     dest: "~/web/udapeople-backend"
 
-- name: Copying required files
-  template:
-    src: "files/artifact.tar.gz"
-    dest: "~/web/udapeople-backend"
+- name: Copying required file archive
+    shell: |
+      cd ~/web/udapeople-backend
+      aws s3 cp s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}/artifact.tar.gz .
 
 - name: Extract files and start app
   shell: |
