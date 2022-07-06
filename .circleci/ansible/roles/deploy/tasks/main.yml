@@ -12,7 +12,7 @@
 - name: Copying required file archive
     shell: |
       cd ~/web/udapeople-backend
-      aws s3 cp s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}/backend.tar.gz .
+      aws s3 cp s3://udapeople-11640059212/backend.tar.gz .
 
 - name: Extract files and start app
   shell: |
