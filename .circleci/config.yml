@@ -335,6 +335,23 @@ jobs:
             --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
             --tags project=udapeople
 
+  add-alertmanager-to-prometheus:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["04:02:55:93:d4:6f:d5:f2:b2:2a:1a:e4:8e:e7:98:ee"]
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible tar gzip
+      - run:
+          name: Add AlertManager to Prometheus Server
+          command: |
+            cd .circleci/ansible
+            ansible-playbook -i prometheus-inventory.txt add-alertmanager.yml
+
   cleanup:
     docker:
       - image: amazon/aws-cli
@@ -395,5 +412,5 @@ workflows:
           requires: [deploy-frontend, deploy-backend]
       - cloudfront-update:
           requires: [smoke-test]
-      # - cleanup
-          # requires: [cloudfront-update]
+      - cleanup:
+          requires: [cloudfront-update]
