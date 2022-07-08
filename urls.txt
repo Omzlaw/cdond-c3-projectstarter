@@ -1,2 +1,2 @@
 URL01 - Github Repository URL: https://github.com/Omzlaw/cdond-c3-projectstarter
-URL02 - S3 Bucket Public URL: http://udapeople-659c90f.s3-website-us-east-1.amazonaws.com/
+URL02 - S3 Bucket Public URL: http://udapeople-bd37a14.s3-website-us-east-1.amazonaws.com/
